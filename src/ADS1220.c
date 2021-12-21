@@ -1,5 +1,5 @@
-#include Arduino.h
-#include ADS1220.h
+#include <Arduino.h>
+#include "ADS1220.h"
 #include <SPI.h>
 
 ADS1220 :: ADS1220(){

@@ -20,6 +20,7 @@
 class ADS1220
 {
 private:
+
         uint8_t default_cs_pin  = 7;
         uint8_t default_rdy_pin = 6;
 public:
