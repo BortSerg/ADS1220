@@ -76,7 +76,7 @@ void ADS1220::Gain (int gain){
     WriteConfig (config_address_reg0, config_register0_value);
 }
 
-void ADS1220 :: MuxChanel (int mux_chanel){
+void ADS1220::MuxChanel (int mux_chanel){
     config_register0_value &= ~MASK_MUX;
     config_register0_value |= mux_chanel;
     WriteConfig (config_address_reg0, config_register0_value);
@@ -158,19 +158,19 @@ void ADS1220::I1MUX (int i1mux_mode){
 }
 
 // SPI commands
-void ADS1220::ADS1220_START (void){
+void ADS1220::Start (void){
     digitalWrite(default_cs_pin, LOW);
     SPI.transfer(START);
     digitalWrite(default_cs_pin, HIGH);
 }
 
-void ADS1220::ADS1220_RESET (void){
+void ADS1220::Reset (void){
     digitalWrite(default_cs_pin, LOW);
     SPI.transfer(RESET); 
     digitalWrite(default_cs_pin, HIGH);
 }
 
-void ADS1220::ADS1220_POWERDOWN (void){
+void ADS1220::PowerDown (void){
     digitalWrite(default_cs_pin, LOW);
     SPI.transfer(POWERDOWN);
     digitalWrite(default_cs_pin, HIGH);

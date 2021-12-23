@@ -257,10 +257,10 @@ public:
         void DRDYM (int vref_mode);
         void I2MUX (int i2mux_mode);
         void I1MUX (int i1mux_mode);
-        
+
         // SPI commands
-        void ADS1220_START (void);
-        void ADS1220_RESET (void);
-        void ADS1220_POWERDOWN (void);
+        void Start (void);
+        void Reset (void);
+        void PowerDown (void);
 
 };
