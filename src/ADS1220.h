@@ -219,20 +219,48 @@
 class ADS1220
 {
 private:
+        uint8_t config_register0_value;
+        uint8_t config_register1_value;
+        uint8_t config_register2_value;
+        uint8_t config_register3_value;
 
         uint8_t default_cs_pin  = 7;
         uint8_t default_rdy_pin = 6;
         void WriteConfig(uint8_t address, uint8_t value);
 public:
-
         ADS1220();
         void begin (void);
         void begin (uint8_t cs_pin, uint8_t rdy_pin);
-        void ReadConfig (uint8_t address);
+        uint8_t ReadConfig (uint8_t address);
         void SetDefaultSettings (void);
         void SetSettings (uint8_t address, uint8_t value);
+
+        // Register 0 configuration metods 
+        void PGA (int pga_mode);
+        void Gain (int gain);       
+        void MuxChanel (int mux_chanel);
+
+        // Register 1 configuration metods
+        void BCS (int bcs_mode);
+        void TemperatureSensor (int ts_mode );
+        void ConversionMode (int conversion_mode);
+        void OperatingMode (int operating_mode);
+        void DataRate (int data_rate_mode);
+
+        // Register 2 configuration metods
+        void IDAC (int idac_current);
+        void PSW (int psw_mode);
+        void FIR (int fit_mode);
+        void VREF (int vref_mode);
+
+        // Register 2 configuration metods
+        void DRDYM (int vref_mode);
+        void I2MUX (int i2mux_mode);
+        void I1MUX (int i1mux_mode);
+        
+        // SPI commands
         void ADS1220_START (void);
         void ADS1220_RESET (void);
-        
+        void ADS1220_POWERDOWN (void);
 
 };
