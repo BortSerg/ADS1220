@@ -1,10 +1,11 @@
 #include <Arduino.h>
 #include "ADS1220.h"
 #include <SPI.h>
-//#include <stdint.h>
+
 
 ADS1220::ADS1220()
 {
+
 }
 
 void ADS1220::begin(void)
@@ -51,8 +52,20 @@ uint8_t ADS1220::ReadConfig(uint8_t address)
     register_value = SPI.transfer(SPI_READ);
     digitalWrite(default_cs_pin, HIGH);
 
-    Serial.print("Register " + String(address) + " = " + String(register_value) + "\n");
+    Serial.print("Register" + String(address) + " = " + String(register_value) + "\n");
     return register_value;
+}
+
+void ADS1220::GetRegistersValue (void)
+{
+    Serial.print("Register0 - ");
+    Serial.println(config_register0_value);
+    Serial.print("Register1 - ");
+    Serial.println(config_register1_value);
+    Serial.print("Register2 - ");
+    Serial.println(config_register2_value);
+    Serial.print("Register3 - ");
+    Serial.println(config_register3_value);
 }
 
 void ADS1220::SetDefaultSettings(void)
@@ -61,7 +74,7 @@ void ADS1220::SetDefaultSettings(void)
     WriteConfig(config_address_reg1, default_value_reg1);
     WriteConfig(config_address_reg2, default_value_reg2);
     WriteConfig(config_address_reg3, default_value_reg3);
-
+    Serial.println("Default settings are set");
     config_register0_value = ReadConfig(config_address_reg0);
     config_register1_value = ReadConfig(config_address_reg1);
     config_register2_value = ReadConfig(config_address_reg2);
@@ -110,6 +123,11 @@ void ADS1220::ConversionMode(int conversion_mode)
     config_register1_value &= ~MASK_CM;
     config_register1_value |= conversion_mode;
     WriteConfig(config_address_reg1, config_register1_value);
+
+    if (conversion_mode == CONTINUOUS_MODE)
+    {
+        Start();
+    }
 }
 
 void ADS1220::OperatingMode(int operating_mode)
@@ -177,12 +195,190 @@ void ADS1220::I1MUX(int i1mux_mode)
     WriteConfig(config_address_reg3, config_register3_value);
 }
 
+// Read ADC convertation data
+void ADS1220::SetInterrupt(uint8_t adc_interrupt) 		// automatic use of interrupts or setting interrupts manually in the program sketch	
+{
+    interrupt = adc_interrupt;
+}
+
+int32_t ADS1220::ReadContinuous(void)                   // Read ADC converting value if Input multiplexer configuration installed earlier
+{                                           
+    static byte SPI_buffer[3];
+    int32_t result_32bit = 0;
+    long int bit24;
+
+    digitalWrite(default_cs_pin, LOW); 
+
+    //delayMicroseconds(100);
+    if (interrupt == INTERNAL)
+	{
+		if (digitalRead(default_rdy_pin) == LOW)
+		{
+			for (uint8_t i = 0; i < 3; i++)
+			{
+				SPI_buffer[i] = SPI.transfer(SPI_READ);
+			}			
+		}
+	}
+	else 
+	{
+		for (uint8_t i = 0; i < 3; i++)
+		{
+			SPI_buffer[i] = SPI.transfer(SPI_READ);
+		}
+	}
+        
+    //delayMicroseconds(100);
+
+    digitalWrite(default_cs_pin, HIGH);
+
+    bit24 = SPI_buffer[0]; // Writing  with 8 bit shift to left
+    bit24 = (bit24 << 8) | SPI_buffer[1];
+    bit24 = (bit24 << 8) | SPI_buffer[2];
+
+    bit24 = (bit24 << 8);
+    result_32bit = (bit24 >> 8);
+
+    return result_32bit;
+}
+
+int32_t ADS1220::ReadContinuousChanel(int mux_chanel) 	// Read ADC converting value if you want set Input multiplexer configuration in method 
+{
+    MuxChanel(mux_chanel);                            // select chanels to convert 
+
+    static byte SPI_buffer[3];
+    int32_t result_32bit = 0;
+    long int bit24;
+    uint8_t timer = 0;
+
+    digitalWrite(default_cs_pin, LOW);
+
+    // delayMicroseconds(100);
+	if (interrupt == INTERNAL)
+	{
+		if (digitalRead(default_rdy_pin) == LOW)
+		{
+			for (uint8_t i = 0; i < 3; i++)
+			{
+				SPI_buffer[i] = SPI.transfer(SPI_READ);
+			}
+		}
+	}
+	else
+	{
+		for (uint8_t i = 0; i < 3; i++)
+		{
+			SPI_buffer[i] = SPI.transfer(SPI_READ);
+		}
+	}
+	// delayMicroseconds(100);
+
+    digitalWrite(default_cs_pin, HIGH);
+
+    bit24 = SPI_buffer[0];                              // Writing  with 8 bit shift to left
+    bit24 = (bit24 << 8) | SPI_buffer[1];
+    bit24 = (bit24 << 8) | SPI_buffer[2];
+
+    bit24 = (bit24 << 8);
+    result_32bit = (bit24 >> 8);
+
+    return result_32bit;
+}
+
+int32_t ADS1220::ReadSingleShot(void)       			// Read ADC converting value if select Single-shot mode and go to poweroff 
+{
+    static byte SPI_buffer[3];
+    int32_t result_32bit = 0;
+    long int bit24;
+
+    Start();
+
+	//delayMicroseconds(100);
+
+	if (interrupt == INTERNAL)
+	{
+		if (digitalRead(default_rdy_pin) == LOW)
+		{
+			for (uint8_t i = 0; i < 3; i++)
+			{
+				SPI_buffer[i] = SPI.transfer(SPI_READ);
+			}
+		}
+	}
+	else
+	{
+		for (uint8_t i = 0; i < 3; i++)
+		{
+			SPI_buffer[i] = SPI.transfer(SPI_READ);
+		}
+	}
+
+	//delayMicroseconds(100);
+
+	digitalWrite(default_cs_pin, HIGH);
+    bit24 = SPI_buffer[0];
+    bit24 = (bit24 << 8) | SPI_buffer[1];
+    bit24 = (bit24 << 8) | SPI_buffer[2];
+
+    bit24 = (bit24 << 8);
+    result_32bit = (bit24 >> 8);
+    PowerDown();                            // Go to sleep
+
+    return result_32bit;
+}
+
+int32_t ADS1220::ReadSingleShotChanel(int mux_chanel) 	// Read ADC converting value if you want set Input multiplexer configuration in method
+{
+    MuxChanel(mux_chanel);                  // select chanels to convert
+
+    static byte SPI_buffer[3];
+    int32_t result_32bit = 0;
+    long int bit24;
+
+    Start();
+
+    // delayMicroseconds(100);
+
+    if (interrupt == INTERNAL)
+    {
+        if (digitalRead(default_rdy_pin) == LOW)
+        {
+            for (uint8_t i = 0; i < 3; i++)
+            {
+                SPI_buffer[i] = SPI.transfer(SPI_READ);
+            }
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0; i < 3; i++)
+        {
+            SPI_buffer[i] = SPI.transfer(SPI_READ);
+        }
+    }
+
+    // delayMicroseconds(100);
+
+    digitalWrite(default_cs_pin, HIGH);
+    bit24 = SPI_buffer[0];
+    bit24 = (bit24 << 8) | SPI_buffer[1];
+    bit24 = (bit24 << 8) | SPI_buffer[2];
+
+    bit24 = (bit24 << 8);
+    result_32bit = (bit24 >> 8);
+    PowerDown();                                // Go to sleep
+
+    return result_32bit;
+}			
+
+
 // SPI commands
 void ADS1220::Start(void)
 {
-    digitalWrite(default_cs_pin, LOW);
-    SPI.transfer(START);
-    digitalWrite(default_cs_pin, HIGH);
+	digitalWrite(default_cs_pin, LOW);
+	SPI.transfer(START);
+	digitalWrite(default_cs_pin, HIGH);
+    delayMicroseconds(50);
 }
 
 void ADS1220::Reset(void)
@@ -190,6 +386,7 @@ void ADS1220::Reset(void)
     digitalWrite(default_cs_pin, LOW);
     SPI.transfer(RESET);
     digitalWrite(default_cs_pin, HIGH);
+    delayMicroseconds(50);
 }
 
 void ADS1220::PowerDown(void)
@@ -197,8 +394,6 @@ void ADS1220::PowerDown(void)
     digitalWrite(default_cs_pin, LOW);
     SPI.transfer(POWERDOWN);
     digitalWrite(default_cs_pin, HIGH);
+    delayMicroseconds(50);
 }
 
-void ADS1220::SetSettings(uint8_t address, uint8_t value)
-{
-}

@@ -16,6 +16,7 @@ void setup()
     ADC.OperatingMode(DUTY_CYCLE_MODE);
     ADC.DataRate(DR_20SPS);
     ADC.FIR(FIR_50);
+    ADC.GetRegistersValue();
 }
 
 void loop()

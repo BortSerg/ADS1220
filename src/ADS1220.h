@@ -10,6 +10,11 @@
 #define WREG                0x40        //Write nn registers starting at address rr
 #define RREG                0x20        //Read nn registers starting at address rr
 
+// interrupts
+#define INTERNAL            0x00        // default 
+#define EXTERNAL            0x01
+
+
 //register address and default settings
 #define config_address_reg0 0x00
 #define config_address_reg1 0x01
@@ -226,15 +231,22 @@ private:
 
         uint8_t default_cs_pin  = 7;
         uint8_t default_rdy_pin = 6;
+
+        uint8_t interrupt = 0;
+        //uint32_t f_mod = 256000;                // Modulator frequency (normal mode)
+
         void WriteConfig(uint8_t address, uint8_t value);
+        uint8_t ReadConfig(uint8_t address);
+
+
 public:
         ADS1220();
         void begin (void);
         void begin (uint8_t cs_pin, uint8_t rdy_pin);
-        uint8_t ReadConfig (uint8_t address);
+        
+        void GetRegistersValue(void);
         void SetDefaultSettings (void);
-        void SetSettings (uint8_t address, uint8_t value);
-
+        
         // Register 0 configuration metods 
         void PGA (int pga_mode);
         void Gain (int gain);       
@@ -257,6 +269,13 @@ public:
         void DRDYM (int vref_mode);
         void I2MUX (int i2mux_mode);
         void I1MUX (int i1mux_mode);
+
+        // Read ADC convertation data
+        void SetInterrupt (uint8_t adc_interrupt);       // automatic use of interrupts or setting interrupts manually in the program sketch
+        int32_t ReadContinuous (void);                   // continuous cycle of transformations
+        int32_t ReadContinuousChanel( int mux_chanel);   // continuous cycle of transformations and if you want set Input multiplexer configuration in method
+        int32_t ReadSingleShot (void);                   // one cycle of transformation and going to sleep
+        int32_t ReadSingleShotChanel (int mux_chanel);   // one cycle of transformation and going to sleep and if you want set Input multiplexer configuration in method
 
         // SPI commands
         void Start (void);
