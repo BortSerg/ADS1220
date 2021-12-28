@@ -14,7 +14,6 @@
 #define INTERNAL            0x00        // default 
 #define EXTERNAL            0x01
 
-
 //register address and default settings
 #define config_address_reg0 0x00
 #define config_address_reg1 0x01
@@ -229,7 +228,7 @@ private:
         uint8_t config_register2_value;
         uint8_t config_register3_value;
 
-        uint8_t default_cs_pin  = 7;
+        uint8_t default_cs_pin = 7;
         uint8_t default_rdy_pin = 6;
 
         uint8_t interrupt = 0;
@@ -266,7 +265,7 @@ public:
         void VREF (int vref_mode);
 
         // Register 2 configuration metods
-        void DRDYM (int vref_mode);
+        void DRDYM (int drdym);
         void I2MUX (int i2mux_mode);
         void I1MUX (int i1mux_mode);
 
@@ -281,5 +280,4 @@ public:
         void Start (void);
         void Reset (void);
         void PowerDown (void);
-
 };

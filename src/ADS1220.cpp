@@ -10,23 +10,26 @@ ADS1220::ADS1220()
 
 void ADS1220::begin(void)
 {
+    /*
     pinMode(default_cs_pin, OUTPUT);
     pinMode(default_rdy_pin, INPUT);
-
+*/
     SPI.begin();
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE1);
 
     SetDefaultSettings();
+    delay(100);
 }
 
 void ADS1220::begin(uint8_t cs_pin, uint8_t rdy_pin)
 {
     default_cs_pin = cs_pin;
     default_rdy_pin = rdy_pin;
-
+/*
     pinMode(default_cs_pin, OUTPUT);
     pinMode(default_rdy_pin, INPUT);
+    */
 
     SPI.begin();
     SPI.setBitOrder(MSBFIRST);
@@ -52,20 +55,24 @@ uint8_t ADS1220::ReadConfig(uint8_t address)
     register_value = SPI.transfer(SPI_READ);
     digitalWrite(default_cs_pin, HIGH);
 
-    Serial.print("Register" + String(address) + " = " + String(register_value) + "\n");
+    Serial.print("Register " + String(address) + " = ");
+    Serial.println(register_value, HEX);
     return register_value;
 }
 
 void ADS1220::GetRegistersValue (void)
 {
-    Serial.print("Register0 - ");
-    Serial.println(config_register0_value);
-    Serial.print("Register1 - ");
-    Serial.println(config_register1_value);
-    Serial.print("Register2 - ");
-    Serial.println(config_register2_value);
-    Serial.print("Register3 - ");
-    Serial.println(config_register3_value);
+    Serial.println();
+    Serial.println("Registers configuration:");
+    Serial.print("Register 0 - ");
+    Serial.println(config_register0_value, HEX);
+    Serial.print("Register 1 - ");
+    Serial.println(config_register1_value, HEX);
+    Serial.print("Register 2 - ");
+    Serial.println(config_register2_value, HEX);
+    Serial.print("Register 3 - ");
+    Serial.println(config_register3_value, HEX);
+    Serial.println(" ");
 }
 
 void ADS1220::SetDefaultSettings(void)
