@@ -2,17 +2,19 @@
 #include "SPI.h"
 
 //SPI commands
-#define SPI_READ            0xFF        //SPI command for read data after transmitter 
-#define RESET               0x06        //Reset the device    
-#define START               0x08        //Start or restart conversions 
-#define POWERDOWN           0x02        //Enter power-down mode
-#define RDATA               0X10        //Read data by command     
-#define WREG                0x40        //Write nn registers starting at address rr
-#define RREG                0x20        //Read nn registers starting at address rr
+#define SPI_READ            0xFF        // SPI command for read data after transmitter 
+#define RESET               0x06        // Reset the device    
+#define START               0x08        // Start or restart conversions 
+#define POWERDOWN           0x02        // Enter power-down mode
+#define RDATA               0X10        // Read data by command     
+#define WREG                0x40        // Write nn registers starting at address rr
+#define RREG                0x20        // Read nn registers starting at address rr
+
+#define FULL_SCALE          8388607     // (2^23)-1
 
 // interrupts
-#define INTERNAL            0x00        // default 
-#define EXTERNAL            0x01
+#define INTERNAL            0x00        // Interrupt interrupt from ads1220 library (default)
+#define EXTERNAL            0x01        // External interrupt from scetch
 
 //register address and default settings
 #define config_address_reg0 0x00
@@ -41,8 +43,8 @@
 //      Disables and bypasses the internal low-noise PGA   
 //              The PGA can only be disabled for gains 1, 2, and 4.
 //              The PGA is always enabled for gain settings 8 to 128     
-#define PGA_BYPASS_ON       0x00        //PGA enabled (default)
-#define PGA_BYPASS_OFF      0x01        //PGA disabled and bypassed
+#define PGA_BYPASS_ON       0x00        // PGA enabled (default)
+#define PGA_BYPASS_OFF      0x01        // PGA disabled and bypassed
 
 //      Gain configuration
 #define GAIN_1              0x00        // FSR ±2.048 V (default)
@@ -55,18 +57,18 @@
 #define GAIN_128            0x0E        // FSR ±0.016 V
 
 //      Input multiplexer configuration
-#define MUX_AIN0_AIN1       0x00        //AINP = AIN0, AINN = AIN1 (default)
-#define MUX_AIN0_AIN2       0x10        //AINP = AIN0, AINN = AIN2
-#define MUX_AIN0_AIN3       0x20        //AINP = AIN0, AINN = AIN3
-#define MUX_AIN1_AIN2       0x30        //AINP = AIN1, AINN = AIN2
-#define MUX_AIN1_AIN3       0x40        //AINP = AIN1, AINN = AIN3
-#define MUX_AIN2_AIN3       0x50        //AINP = AIN2, AINN = AIN3
-#define MUX_AIN1_AIN0       0x60        //AINP = AIN1, AINN = AIN0
-#define MUX_AIN3_AIN2       0x70        //AINP = AIN3, AINN = AIN2
-#define MUX_AIN0_AVSS       0x80        //AINP = AIN0, AINN = AVSS
-#define MUX_AIN1_AVSS       0x90        //AINP = AIN1, AINN = AVSS
-#define MUX_AIN2_AVSS       0xA0        //AINP = AIN2, AINN = AVSS
-#define MUX_AIN3_AVSS       0xB0        //AINP = AIN3, AINN = AVSS
+#define MUX_AIN0_AIN1       0x00        // AINP = AIN0, AINN = AIN1 (default)
+#define MUX_AIN0_AIN2       0x10        // AINP = AIN0, AINN = AIN2
+#define MUX_AIN0_AIN3       0x20        // AINP = AIN0, AINN = AIN3
+#define MUX_AIN1_AIN2       0x30        // AINP = AIN1, AINN = AIN2
+#define MUX_AIN1_AIN3       0x40        // AINP = AIN1, AINN = AIN3
+#define MUX_AIN2_AIN3       0x50        // AINP = AIN2, AINN = AIN3
+#define MUX_AIN1_AIN0       0x60        // AINP = AIN1, AINN = AIN0
+#define MUX_AIN3_AIN2       0x70        // AINP = AIN3, AINN = AIN2
+#define MUX_AIN0_AVSS       0x80        // AINP = AIN0, AINN = AVSS
+#define MUX_AIN1_AVSS       0x90        // AINP = AIN1, AINN = AVSS
+#define MUX_AIN2_AVSS       0xA0        // AINP = AIN2, AINN = AVSS
+#define MUX_AIN3_AVSS       0xB0        // AINP = AIN3, AINN = AVSS
 
 
 
@@ -88,25 +90,25 @@
 //                This bit controls the 10-µA, burn-out current sources.
 //                The burn-out current sources can be used to detect sensor faults such as wire
 //                breaks and shorted sensors.
-#define BCS_OFF             0x00        //Current sources off (default)
-#define BCS_ON              0x01        //Current sources on
+#define BCS_OFF             0x00        // Current sources off (default)
+#define BCS_ON              0x01        // Current sources on
 
 //      Temperature sensor mode
 //              This bit enables the internal temperature sensor and puts the device in
 //              temperature sensor mode.
-#define TS_OFF              0x00        //Disables temperature sensor (default)
-#define TS_ON               0x02        //Enables temperature sensor
+#define TS_OFF              0x00        // Disables temperature sensor (default)
+#define TS_ON               0x02        // Enables temperature sensor
 
 //      Conversion mode
 //              This bit sets the conversion mode for the device
-#define SINGLE_SHORT_MODE   0x00        //Single-shot mode (default)
-#define CONTINUOUS_MODE     0x04        //Continuous conversion mode
+#define SINGLE_SHORT_MODE   0x00        // Single-shot mode (default)
+#define CONTINUOUS_MODE     0x04        // Continuous conversion mode
 
 //      Operating mode
 //              These bits control the operating mode the device operates in.
-#define NORMAL_MODE         0x00        //256-kHz modulator clock      default
-#define DUTY_CYCLE_MODE     0x08        //internal duty cycle of 1:4
-#define TURBO_MODE          0x10        //512-kHz modulator clock
+#define NORMAL_MODE         0x00        // 256-kHz modulator clock      default
+#define DUTY_CYCLE_MODE     0x08        // internal duty cycle of 1:4
+#define TURBO_MODE          0x10        // 512-kHz modulator clock
 
 //      Data rate
 //              These bits control the data rate setting depending on the selected operating
@@ -160,24 +162,24 @@
 //      Low-side power switch configuration
 //              This bit configures the behavior of the low-side switch connected between
 //              AIN3/REFN1 and AVSS.
-#define PSW_OPEN            0x00        //Switch is always open (default)
-#define PSW_AUTO            0x08        //Switch automatically closes when the START/SYNC command is sent and opens when the POWERDOWN command is issued
+#define PSW_OPEN            0x00        // Switch is always open (default)
+#define PSW_AUTO            0x08        // Switch automatically closes when the START/SYNC command is sent and opens when the POWERDOWN command is issued
 
 //      FIR filter configuration
 //              These bits configure the filter coefficients for the internal FIR filter.
 //              Only use these bits together with the 20-SPS setting in normal mode and the 5-
 //              SPS setting in duty-cycle mode. Set to 00 for all other data rates.
-#define FIR_OFF             0x00        //No 50-Hz or 60-Hz rejection (default)
-#define FIR_50_60           0x10        //Simultaneous 50-Hz and 60-Hz rejection
-#define FIR_50              0x20        //50-Hz rejection only
-#define FIR_60              0x30        //60-Hz rejection only
+#define FIR_OFF             0x00        // No 50-Hz or 60-Hz rejection (default)
+#define FIR_50_60           0x10        // Simultaneous 50-Hz and 60-Hz rejection
+#define FIR_50              0x20        // 50-Hz rejection only
+#define FIR_60              0x30        // 60-Hz rejection only
 
 //      Voltage reference selection
 //              These bits select the voltage reference source that is used for the conversion
-#define VREF_INTERNAL       0x00        //Internal 2.048-V reference selected (default)
-#define VREF_REFP0_REFN0    0x40        //External reference selected using dedicated REFP0 and REFN0 inputs
-#define VREF_AN0_AN3        0x80        //External reference selected using AIN0/REFP1 and AIN3/REFN1 inputs
-#define VREF_ANALOG         0xC0        //Analog supply (AVDD – AVSS) used as reference
+#define VREF_INTERNAL       0x00        // Internal 2.048-V reference selected (default)
+#define VREF_REFP0_REFN0    0x40        // External reference selected using dedicated REFP0 and REFN0 inputs
+#define VREF_AN0_AN3        0x80        // External reference selected using AIN0/REFP1 and AIN3/REFN1 inputs
+#define VREF_ANALOG         0xC0        // Analog supply (AVDD – AVSS) used as reference
 
 
 
@@ -195,28 +197,28 @@
 
 //      DRDY mode
 //              This bit controls the behavior of the DOUT/DRDY pin when new data are ready.
-#define DRDYM_DRDY_ONLY     0x00        //Only the dedicated DRDY pin is used to indicate when data are ready (default)
-#define DRDYM_DRDY_DOUT     0x02        //Data ready is indicated simultaneously on DOUT/DRDY and DRDY
+#define DRDYM_DRDY_ONLY     0x00        // Only the dedicated DRDY pin is used to indicate when data are ready (default)
+#define DRDYM_DRDY_DOUT     0x02        // Data ready is indicated simultaneously on DOUT/DRDY and DRDY
 
 //      IDAC2 routing configuration
 //              These bits select the channel where IDAC2 is routed to.
-#define IDAC2_OFF           0x00        //IDAC2 disabled (default)
-#define IDAC2_AIN0_REFP1    0x04        //IDAC2 connected to AIN0/REFP1
-#define IDAC2_AIN1          0x08        //IDAC2 connected to AIN1
-#define IDAC2_AIN2          0x0C        //IDAC2 connected to AIN2
-#define IDAC2_AIN3_REFN1    0x10        //IDAC2 connected to AIN3/REFN1
-#define IDAC2_REFP0         0x14        //IDAC2 connected to REFP0
-#define IDAC2_REFN0         0x18        //IDAC2 connected to REFN0  
+#define IDAC2_OFF           0x00        // IDAC2 disabled (default)
+#define IDAC2_AIN0_REFP1    0x04        // IDAC2 connected to AIN0/REFP1
+#define IDAC2_AIN1          0x08        // IDAC2 connected to AIN1
+#define IDAC2_AIN2          0x0C        // IDAC2 connected to AIN2
+#define IDAC2_AIN3_REFN1    0x10        // IDAC2 connected to AIN3/REFN1
+#define IDAC2_REFP0         0x14        // IDAC2 connected to REFP0
+#define IDAC2_REFN0         0x18        // IDAC2 connected to REFN0  
           
 //      IDAC1 routing configuration
 //              These bits select the channel where IDAC1 is routed to.
-#define IDAC1_OFF           0x00        //IDAC1 disabled (default)
-#define IDAC1_AIN0_REFP1    0x20        //IDAC1 connected to AIN0/REFP1
-#define IDAC1_AIN1          0x40        //IDAC1 connected to AIN1
-#define IDAC1_AIN2          0x60        //IDAC1 connected to AIN2
-#define IDAC1_AIN3_REFN1    0x80        //IDAC1 connected to AIN3/REFN1
-#define IDAC1_REFP0         0xA0        //IDAC1 connected to REFP0
-#define IDAC1_REFN0         0xC0        //IDAC1 connected to REFN0  
+#define IDAC1_OFF           0x00        // IDAC1 disabled (default)
+#define IDAC1_AIN0_REFP1    0x20        // IDAC1 connected to AIN0/REFP1
+#define IDAC1_AIN1          0x40        // IDAC1 connected to AIN1
+#define IDAC1_AIN2          0x60        // IDAC1 connected to AIN2
+#define IDAC1_AIN3_REFN1    0x80        // IDAC1 connected to AIN3/REFN1
+#define IDAC1_REFP0         0xA0        // IDAC1 connected to REFP0
+#define IDAC1_REFN0         0xC0        // IDAC1 connected to REFN0  
 
 
 
@@ -231,6 +233,10 @@ private:
         uint8_t default_cs_pin = 7;
         uint8_t default_rdy_pin = 6;
 
+        uint8_t ads_pga = 1;
+        float vref = 2.048;                       // Internal ref voltage ADS1220 (default)
+        float vfsr = vref/ads_pga;
+
         uint8_t interrupt = 0;
         //uint32_t f_mod = 256000;                // Modulator frequency (normal mode)
 
@@ -244,6 +250,7 @@ public:
         void begin (uint8_t cs_pin, uint8_t rdy_pin);
         
         void GetRegistersValue(void);
+        void SetExternalVref (float ext_vref);
         void SetDefaultSettings (void);
         
         // Register 0 configuration metods 
@@ -275,7 +282,7 @@ public:
         int32_t ReadContinuousChanel( int mux_chanel);   // continuous cycle of transformations and if you want set Input multiplexer configuration in method
         int32_t ReadSingleShot (void);                   // one cycle of transformation and going to sleep
         int32_t ReadSingleShotChanel (int mux_chanel);   // one cycle of transformation and going to sleep and if you want set Input multiplexer configuration in method
-
+        float ConvertToVoltage(int32 ads_value);
         // SPI commands
         void Start (void);
         void Reset (void);

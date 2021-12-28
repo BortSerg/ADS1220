@@ -10,26 +10,23 @@ ADS1220::ADS1220()
 
 void ADS1220::begin(void)
 {
-    /*
     pinMode(default_cs_pin, OUTPUT);
     pinMode(default_rdy_pin, INPUT);
-*/
+
     SPI.begin();
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE1);
 
     SetDefaultSettings();
-    delay(100);
 }
 
 void ADS1220::begin(uint8_t cs_pin, uint8_t rdy_pin)
 {
     default_cs_pin = cs_pin;
     default_rdy_pin = rdy_pin;
-/*
+
     pinMode(default_cs_pin, OUTPUT);
     pinMode(default_rdy_pin, INPUT);
-    */
 
     SPI.begin();
     SPI.setBitOrder(MSBFIRST);
@@ -55,24 +52,25 @@ uint8_t ADS1220::ReadConfig(uint8_t address)
     register_value = SPI.transfer(SPI_READ);
     digitalWrite(default_cs_pin, HIGH);
 
-    Serial.print("Register " + String(address) + " = ");
-    Serial.println(register_value, HEX);
+    Serial.print("Register" + String(address) + " = " + String(register_value) + "\n");
     return register_value;
 }
 
 void ADS1220::GetRegistersValue (void)
 {
-    Serial.println();
-    Serial.println("Registers configuration:");
-    Serial.print("Register 0 - ");
-    Serial.println(config_register0_value, HEX);
-    Serial.print("Register 1 - ");
-    Serial.println(config_register1_value, HEX);
-    Serial.print("Register 2 - ");
-    Serial.println(config_register2_value, HEX);
-    Serial.print("Register 3 - ");
-    Serial.println(config_register3_value, HEX);
-    Serial.println(" ");
+    Serial.print("Register0 - ");
+    Serial.println(config_register0_value);
+    Serial.print("Register1 - ");
+    Serial.println(config_register1_value);
+    Serial.print("Register2 - ");
+    Serial.println(config_register2_value);
+    Serial.print("Register3 - ");
+    Serial.println(config_register3_value);
+}
+
+void ADS1220::SetExternalVref (float ext_vref)
+{
+    vref = ext_vref;
 }
 
 void ADS1220::SetDefaultSettings(void)
@@ -86,6 +84,11 @@ void ADS1220::SetDefaultSettings(void)
     config_register1_value = ReadConfig(config_address_reg1);
     config_register2_value = ReadConfig(config_address_reg2);
     config_register3_value = ReadConfig(config_address_reg3);
+
+    vref = 2.048;
+    ads_pga = 1;
+    vfsr = vref/ads_pga;
+
 }
 
 // Register 0 configuration metods
@@ -101,6 +104,37 @@ void ADS1220::Gain(int gain)
     config_register0_value &= ~MASK_GAIN;
     config_register0_value |= gain;
     WriteConfig(config_address_reg0, config_register0_value);
+    switch (gain)
+    {
+        case GAIN_1:
+            ads_pga = 1;
+            break;
+        case GAIN_2:
+            ads_pga = 2;
+            break;    
+        case GAIN_4:
+            ads_pga = 4;
+            break;
+        case GAIN_8:
+            ads_pga = 8;
+            break;
+        case GAIN_16:
+            ads_pga = 16;
+            break;
+        case GAIN_32:
+            ads_pga = 32;
+            break;
+        case GAIN_64:
+            ads_pga = 64;
+            break;
+        case GAIN_128:
+            ads_pga = 128;
+            break;     
+        default: 
+            ads_pga = 1;
+            break;
+    }
+    vfsr = vref/ads_pga;
 }
 
 void ADS1220::MuxChanel(int mux_chanel)
@@ -178,6 +212,16 @@ void ADS1220::VREF(int vref_mode)
     config_register2_value &= ~MASK_VREF;
     config_register2_value |= vref_mode;
     WriteConfig(config_address_reg2, config_register2_value);
+
+    if (vref_mode == VREF_INTERNAL)
+    {
+        vref = 2.048;
+    }
+    else
+    {
+        Serial.println ("You set external ref voltage.");
+        Serial.println ("Please enter ref voltage value. Using the 'SetExternalVref(float ext_vref)' method.");
+    }
 }
 
 // Register 3 configuration metods
@@ -203,9 +247,9 @@ void ADS1220::I1MUX(int i1mux_mode)
 }
 
 // Read ADC convertation data
-void ADS1220::SetInterrupt(uint8_t adc_interrupt) 		// automatic use of interrupts or setting interrupts manually in the program sketch	
+void ADS1220::SetInterrupt(uint8_t ads_interrupt) 		// automatic use of interrupts or setting interrupts manually in the program sketch	
 {
-    interrupt = adc_interrupt;
+    interrupt = ads_interrupt;
 }
 
 int32_t ADS1220::ReadContinuous(void)                   // Read ADC converting value if Input multiplexer configuration installed earlier
@@ -376,7 +420,12 @@ int32_t ADS1220::ReadSingleShotChanel(int mux_chanel) 	// Read ADC converting va
     PowerDown();                                // Go to sleep
 
     return result_32bit;
-}			
+}
+
+float ADS1220::ConvertToVoltage(int32_t ads_value)
+{
+    return (float) ((ads_value*vfsr*1000)/FULL_SCALE);
+}
 
 
 // SPI commands
@@ -393,7 +442,7 @@ void ADS1220::Reset(void)
     digitalWrite(default_cs_pin, LOW);
     SPI.transfer(RESET);
     digitalWrite(default_cs_pin, HIGH);
-    delayMicroseconds(50);
+    delayMicroseconds(100));
 }
 
 void ADS1220::PowerDown(void)
