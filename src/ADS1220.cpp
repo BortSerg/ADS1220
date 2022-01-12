@@ -442,7 +442,7 @@ void ADS1220::Reset(void)
     digitalWrite(default_cs_pin, LOW);
     SPI.transfer(RESET);
     digitalWrite(default_cs_pin, HIGH);
-    delayMicroseconds(100));
+    delayMicroseconds(100);
 }
 
 void ADS1220::PowerDown(void)
