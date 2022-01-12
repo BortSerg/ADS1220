@@ -282,7 +282,7 @@ public:
         int32_t ReadContinuousChanel( int mux_chanel);   // continuous cycle of transformations and if you want set Input multiplexer configuration in method
         int32_t ReadSingleShot (void);                   // one cycle of transformation and going to sleep
         int32_t ReadSingleShotChanel (int mux_chanel);   // one cycle of transformation and going to sleep and if you want set Input multiplexer configuration in method
-        float ConvertToVoltage(int32 ads_value);
+        float ConvertToVoltage(int32_t ads_value);
         // SPI commands
         void Start (void);
         void Reset (void);
