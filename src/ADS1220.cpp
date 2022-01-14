@@ -2,10 +2,8 @@
 #include "ADS1220.h"
 #include <SPI.h>
 
-
 ADS1220::ADS1220()
 {
-
 }
 
 void ADS1220::begin(void)
@@ -17,7 +15,7 @@ void ADS1220::begin(void)
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE1);
 
-    SetDefaultSettings();
+    // SetDefaultSettings();
 }
 
 void ADS1220::begin(uint8_t cs_pin, uint8_t rdy_pin)
@@ -32,7 +30,7 @@ void ADS1220::begin(uint8_t cs_pin, uint8_t rdy_pin)
     SPI.setBitOrder(MSBFIRST);
     SPI.setDataMode(SPI_MODE1);
 
-    SetDefaultSettings();
+    // SetDefaultSettings();
 }
 
 void ADS1220::WriteConfig(uint8_t address, uint8_t value)
@@ -52,23 +50,23 @@ uint8_t ADS1220::ReadConfig(uint8_t address)
     register_value = SPI.transfer(SPI_READ);
     digitalWrite(default_cs_pin, HIGH);
 
-    Serial.print("Register" + String(address) + " = " + String(register_value) + "\n");
+    Serial.print("Register" + String(address) + " = " + String(register_value, HEX) + "\n");
     return register_value;
 }
 
-void ADS1220::GetRegistersValue (void)
+void ADS1220::GetRegistersValue(void)
 {
-    Serial.print("Register0 - ");
-    Serial.println(config_register0_value);
-    Serial.print("Register1 - ");
-    Serial.println(config_register1_value);
-    Serial.print("Register2 - ");
-    Serial.println(config_register2_value);
-    Serial.print("Register3 - ");
-    Serial.println(config_register3_value);
+    Serial.print("Register 0 - ");
+    Serial.println(config_register0_value, HEX);
+    Serial.print("Register 1 - ");
+    Serial.println(config_register1_value, HEX);
+    Serial.print("Register 2 - ");
+    Serial.println(config_register2_value, HEX);
+    Serial.print("Register 3 - ");
+    Serial.println(config_register3_value, HEX);
 }
 
-void ADS1220::SetExternalVref (float ext_vref)
+void ADS1220::SetExternalVref(float ext_vref)
 {
     vref = ext_vref;
 }
@@ -87,8 +85,7 @@ void ADS1220::SetDefaultSettings(void)
 
     vref = 2.048;
     ads_pga = 1;
-    vfsr = vref/ads_pga;
-
+    vfsr = vref / ads_pga;
 }
 
 // Register 0 configuration metods
@@ -106,35 +103,35 @@ void ADS1220::Gain(int gain)
     WriteConfig(config_address_reg0, config_register0_value);
     switch (gain)
     {
-        case GAIN_1:
-            ads_pga = 1;
-            break;
-        case GAIN_2:
-            ads_pga = 2;
-            break;    
-        case GAIN_4:
-            ads_pga = 4;
-            break;
-        case GAIN_8:
-            ads_pga = 8;
-            break;
-        case GAIN_16:
-            ads_pga = 16;
-            break;
-        case GAIN_32:
-            ads_pga = 32;
-            break;
-        case GAIN_64:
-            ads_pga = 64;
-            break;
-        case GAIN_128:
-            ads_pga = 128;
-            break;     
-        default: 
-            ads_pga = 1;
-            break;
+    case GAIN_1:
+        ads_pga = 1;
+        break;
+    case GAIN_2:
+        ads_pga = 2;
+        break;
+    case GAIN_4:
+        ads_pga = 4;
+        break;
+    case GAIN_8:
+        ads_pga = 8;
+        break;
+    case GAIN_16:
+        ads_pga = 16;
+        break;
+    case GAIN_32:
+        ads_pga = 32;
+        break;
+    case GAIN_64:
+        ads_pga = 64;
+        break;
+    case GAIN_128:
+        ads_pga = 128;
+        break;
+    default:
+        ads_pga = 1;
+        break;
     }
-    vfsr = vref/ads_pga;
+    vfsr = vref / ads_pga;
 }
 
 void ADS1220::MuxChanel(int mux_chanel)
@@ -219,8 +216,8 @@ void ADS1220::VREF(int vref_mode)
     }
     else
     {
-        Serial.println ("You set external ref voltage.");
-        Serial.println ("Please enter ref voltage value. Using the 'SetExternalVref(float ext_vref)' method.");
+        Serial.println("You set external ref voltage.");
+        Serial.println("Please enter ref voltage value. Using the 'SetExternalVref(float ext_vref)' method.");
     }
 }
 
@@ -247,39 +244,39 @@ void ADS1220::I1MUX(int i1mux_mode)
 }
 
 // Read ADC convertation data
-void ADS1220::SetInterrupt(uint8_t ads_interrupt) 		// automatic use of interrupts or setting interrupts manually in the program sketch	
+void ADS1220::SetInterrupt(uint8_t ads_interrupt) // automatic use of interrupts or setting interrupts manually in the program sketch
 {
     interrupt = ads_interrupt;
 }
 
-int32_t ADS1220::ReadContinuous(void)                   // Read ADC converting value if Input multiplexer configuration installed earlier
-{                                           
+int32_t ADS1220::ReadContinuous(void) // Read ADC converting value if Input multiplexer configuration installed earlier
+{
     static byte SPI_buffer[3];
     int32_t result_32bit = 0;
     long int bit24;
 
-    digitalWrite(default_cs_pin, LOW); 
+    digitalWrite(default_cs_pin, LOW);
 
-    //delayMicroseconds(100);
+    // delayMicroseconds(100);
     if (interrupt == INTERNAL)
-	{
-		if (digitalRead(default_rdy_pin) == LOW)
-		{
-			for (uint8_t i = 0; i < 3; i++)
-			{
-				SPI_buffer[i] = SPI.transfer(SPI_READ);
-			}			
-		}
-	}
-	else 
-	{
-		for (uint8_t i = 0; i < 3; i++)
-		{
-			SPI_buffer[i] = SPI.transfer(SPI_READ);
-		}
-	}
-        
-    //delayMicroseconds(100);
+    {
+        if (digitalRead(default_rdy_pin) == LOW)
+        {
+            for (uint8_t i = 0; i < 3; i++)
+            {
+                SPI_buffer[i] = SPI.transfer(SPI_READ);
+            }
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0; i < 3; i++)
+        {
+            SPI_buffer[i] = SPI.transfer(SPI_READ);
+        }
+    }
+
+    // delayMicroseconds(100);
 
     digitalWrite(default_cs_pin, HIGH);
 
@@ -293,9 +290,9 @@ int32_t ADS1220::ReadContinuous(void)                   // Read ADC converting v
     return result_32bit;
 }
 
-int32_t ADS1220::ReadContinuousChanel(int mux_chanel) 	// Read ADC converting value if you want set Input multiplexer configuration in method 
+int32_t ADS1220::ReadContinuousChanel(int mux_chanel) // Read ADC converting value if you want set Input multiplexer configuration in method
 {
-    MuxChanel(mux_chanel);                            // select chanels to convert 
+    MuxChanel(mux_chanel); // select chanels to convert
 
     static byte SPI_buffer[3];
     int32_t result_32bit = 0;
@@ -305,28 +302,28 @@ int32_t ADS1220::ReadContinuousChanel(int mux_chanel) 	// Read ADC converting va
     digitalWrite(default_cs_pin, LOW);
 
     // delayMicroseconds(100);
-	if (interrupt == INTERNAL)
-	{
-		if (digitalRead(default_rdy_pin) == LOW)
-		{
-			for (uint8_t i = 0; i < 3; i++)
-			{
-				SPI_buffer[i] = SPI.transfer(SPI_READ);
-			}
-		}
-	}
-	else
-	{
-		for (uint8_t i = 0; i < 3; i++)
-		{
-			SPI_buffer[i] = SPI.transfer(SPI_READ);
-		}
-	}
-	// delayMicroseconds(100);
+    if (interrupt == INTERNAL)
+    {
+        if (digitalRead(default_rdy_pin) == LOW)
+        {
+            for (uint8_t i = 0; i < 3; i++)
+            {
+                SPI_buffer[i] = SPI.transfer(SPI_READ);
+            }
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0; i < 3; i++)
+        {
+            SPI_buffer[i] = SPI.transfer(SPI_READ);
+        }
+    }
+    // delayMicroseconds(100);
 
     digitalWrite(default_cs_pin, HIGH);
 
-    bit24 = SPI_buffer[0];                              // Writing  with 8 bit shift to left
+    bit24 = SPI_buffer[0]; // Writing  with 8 bit shift to left
     bit24 = (bit24 << 8) | SPI_buffer[1];
     bit24 = (bit24 << 8) | SPI_buffer[2];
 
@@ -336,7 +333,7 @@ int32_t ADS1220::ReadContinuousChanel(int mux_chanel) 	// Read ADC converting va
     return result_32bit;
 }
 
-int32_t ADS1220::ReadSingleShot(void)       			// Read ADC converting value if select Single-shot mode and go to poweroff 
+int32_t ADS1220::ReadSingleShot(void) // Read ADC converting value if select Single-shot mode and go to poweroff
 {
     static byte SPI_buffer[3];
     int32_t result_32bit = 0;
@@ -344,43 +341,43 @@ int32_t ADS1220::ReadSingleShot(void)       			// Read ADC converting value if s
 
     Start();
 
-	//delayMicroseconds(100);
+    // delayMicroseconds(100);
 
-	if (interrupt == INTERNAL)
-	{
-		if (digitalRead(default_rdy_pin) == LOW)
-		{
-			for (uint8_t i = 0; i < 3; i++)
-			{
-				SPI_buffer[i] = SPI.transfer(SPI_READ);
-			}
-		}
-	}
-	else
-	{
-		for (uint8_t i = 0; i < 3; i++)
-		{
-			SPI_buffer[i] = SPI.transfer(SPI_READ);
-		}
-	}
+    if (interrupt == INTERNAL)
+    {
+        if (digitalRead(default_rdy_pin) == LOW)
+        {
+            for (uint8_t i = 0; i < 3; i++)
+            {
+                SPI_buffer[i] = SPI.transfer(SPI_READ);
+            }
+        }
+    }
+    else
+    {
+        for (uint8_t i = 0; i < 3; i++)
+        {
+            SPI_buffer[i] = SPI.transfer(SPI_READ);
+        }
+    }
 
-	//delayMicroseconds(100);
+    // delayMicroseconds(100);
 
-	digitalWrite(default_cs_pin, HIGH);
+    digitalWrite(default_cs_pin, HIGH);
     bit24 = SPI_buffer[0];
     bit24 = (bit24 << 8) | SPI_buffer[1];
     bit24 = (bit24 << 8) | SPI_buffer[2];
 
     bit24 = (bit24 << 8);
     result_32bit = (bit24 >> 8);
-    PowerDown();                            // Go to sleep
+    PowerDown(); // Go to sleep
 
     return result_32bit;
 }
 
-int32_t ADS1220::ReadSingleShotChanel(int mux_chanel) 	// Read ADC converting value if you want set Input multiplexer configuration in method
+int32_t ADS1220::ReadSingleShotChanel(int mux_chanel) // Read ADC converting value if you want set Input multiplexer configuration in method
 {
-    MuxChanel(mux_chanel);                  // select chanels to convert
+    MuxChanel(mux_chanel); // select chanels to convert
 
     static byte SPI_buffer[3];
     int32_t result_32bit = 0;
@@ -417,23 +414,22 @@ int32_t ADS1220::ReadSingleShotChanel(int mux_chanel) 	// Read ADC converting va
 
     bit24 = (bit24 << 8);
     result_32bit = (bit24 >> 8);
-    PowerDown();                                // Go to sleep
+    PowerDown(); // Go to sleep
 
     return result_32bit;
 }
 
 float ADS1220::ConvertToVoltage(int32_t ads_value)
 {
-    return (float) ((ads_value*vfsr*1000)/FULL_SCALE);
+    return (float)((ads_value * vfsr * 1000) / FULL_SCALE);
 }
-
 
 // SPI commands
 void ADS1220::Start(void)
 {
-	digitalWrite(default_cs_pin, LOW);
-	SPI.transfer(START);
-	digitalWrite(default_cs_pin, HIGH);
+    digitalWrite(default_cs_pin, LOW);
+    SPI.transfer(START);
+    digitalWrite(default_cs_pin, HIGH);
     delayMicroseconds(50);
 }
 
@@ -452,4 +448,3 @@ void ADS1220::PowerDown(void)
     digitalWrite(default_cs_pin, HIGH);
     delayMicroseconds(50);
 }
-

@@ -10,7 +10,7 @@
 #define WREG                0x40        // Write nn registers starting at address rr
 #define RREG                0x20        // Read nn registers starting at address rr
 
-#define FULL_SCALE          8388607     // (2^23)-1
+#define FULL_SCALE          8388607     // 2^23
 
 // interrupts
 #define INTERNAL            0x00        // Interrupt interrupt from ads1220 library (default)
@@ -240,15 +240,13 @@ private:
         uint8_t interrupt = 0;
         //uint32_t f_mod = 256000;                // Modulator frequency (normal mode)
 
-        void WriteConfig(uint8_t address, uint8_t value);
-        uint8_t ReadConfig(uint8_t address);
-
-
+        
 public:
         ADS1220();
         void begin (void);
         void begin (uint8_t cs_pin, uint8_t rdy_pin);
-        
+        void WriteConfig(uint8_t address, uint8_t value);
+        uint8_t ReadConfig(uint8_t address);
         void GetRegistersValue(void);
         void SetExternalVref (float ext_vref);
         void SetDefaultSettings (void);

@@ -38,6 +38,7 @@ ReadSingleShotChanel	KEYWORD2
 Start	KEYWORD2
 Reset	KEYWORD2
 PowerDown	KEYWORD2
+ConvertToVoltage	KEYWORD2
 
 #######################################
 #	Constants	(LITERAL1)
