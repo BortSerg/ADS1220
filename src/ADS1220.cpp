@@ -304,6 +304,10 @@ int32_t ADS1220::ReadContinuousChanel(int mux_chanel) // Read ADC converting val
     // delayMicroseconds(100);
     if (interrupt == INTERNAL)
     {
+        while (digitalRead(default_rdy_pin) == HIGH) //
+        {
+
+        }
         if (digitalRead(default_rdy_pin) == LOW)
         {
             for (uint8_t i = 0; i < 3; i++)
@@ -419,7 +423,7 @@ int32_t ADS1220::ReadSingleShotChanel(int mux_chanel) // Read ADC converting val
     return result_32bit;
 }
 
-float ADS1220::ConvertToVoltage(int32_t ads_value)
+float ADS1220::ConvertToMilivolt(int32_t ads_value)
 {
     return (float)((ads_value * vfsr * 1000) / FULL_SCALE);
 }
